@@ -1,6 +1,6 @@
 # Obsidian Post Webhook Plugin
 
-Send your Obsidian notes to any webhook endpoint with YAML frontmatter support and attachment handling. Perfect for automating your note-taking workflow and integrating with external services.
+Send your Obsidian notes to any webhook endpoint with YAML frontmatter support and attachment handling. Perfect for automating your note-taking workflow and integrating with external services, such as n8n, Make.com and Zapier.
 
 ## Features
 
@@ -9,7 +9,6 @@ Send your Obsidian notes to any webhook endpoint with YAML frontmatter support a
 - 📎 Automatic attachment handling (images and files)
 - ⚡ Quick access through command palette
 - ⚙️ Simple configuration with webhook URL
-- 🔍 Detailed error reporting
 - 🧪 Built-in webhook testing functionality
 
 ## Installation
@@ -71,13 +70,6 @@ The plugin automatically:
 - Converts them to base64
 - Includes them in the webhook payload
 - Supports images and other file types
-
-## Development
-
-1. Clone this repository
-2. Run `npm install`
-3. Run `npm run dev` to start compilation in watch mode
-4. Copy the `main.js`, `manifest.json`, and `styles.css` (if you have any) to your Obsidian plugins folder
 
 ## License
 
