@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-post-webhook",
+  "name": "Post Webhook",
+  "version": "1.0.0",
+  "minAppVersion": "0.12.0",
+  "description": "Send notes to webhook endpoints, for seamless integration with i.a. n8n, Make.com, and Zapier.",
+  "author": "MasterB1234",
+  "isDesktopOnly": false
+}
