@@ -1,5 +1,5 @@
 {
-  "id": "obsidian-post-webhook",
+  "id": "post-webhook",
   "name": "Post Webhook",
   "version": "1.0.0",
   "minAppVersion": "0.12.0",
