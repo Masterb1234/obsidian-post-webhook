@@ -8,7 +8,7 @@ Send your Obsidian notes to any Webhook endpoint with YAML frontmatter support a
 - 📋 YAML frontmatter parsing and inclusion in the Webhook payload
 - 📎 Automatic attachment handling
 - ⚡ Quick access through command palette
-- 🧪 Built-in Webhook testing functionality
+- 🧪 Built-in Webhook testing functionality 
 
 ## Installation
 
