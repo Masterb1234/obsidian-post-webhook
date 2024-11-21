@@ -1,137 +1,160 @@
-const YAML = require('yaml');
+const { requestUrl, arrayBufferToBase64, parseYaml, getFrontMatterInfo } = require('obsidian');
 
 class WebhookService {
     static validateUrl(url) {
         try {
-            new URL(url);
-            return true;
+            const parsedUrl = new URL(url);
+            return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
         } catch {
             return false;
         }
     }
 
     static parseYamlFrontmatter(content) {
-        const yamlRegex = /^---\n([\s\S]*?)\n---/;
-        const match = content.match(yamlRegex);
-        
-        if (match) {
-            try {
-                const yamlContent = match[1];
-                const parsedYaml = YAML.parse(yamlContent);
-                const remainingContent = content.slice(match[0].length).trim();
-                return {
-                    frontmatter: parsedYaml,
-                    content: remainingContent
-                };
-            } catch (error) {
-                console.error('YAML parsing error:', error);
-                return {
-                    frontmatter: {},
-                    content: content
-                };
-            }
+        const info = getFrontMatterInfo(content);
+        if (!info.exists) {
+            return {
+                frontmatter: {},
+                content
+            };
         }
-        
+        const frontmatter = parseYaml(info.frontmatter);
+        const contentWithoutFrontmatter = content.slice(info.contentStart);
         return {
-            frontmatter: {},
-            content: content
+            frontmatter,
+            content: contentWithoutFrontmatter
         };
     }
 
-    static async getAttachments(app, content, notePath) {
+    static async getAttachments(app, file) {
         const attachments = [];
-        const attachmentRegex = /!?\[\[([^\]]+?)(?:\|[^\]]+)?\]\]|!\[(.*?)\]\(([^)]+)\)/g;
-        const matches = [...content.matchAll(attachmentRegex)];
+        const cache = app.metadataCache.getFileCache(file);
         
-        for (const match of matches) {
-            try {
-                // Get attachment name from either wiki-link or markdown format
-                let attachmentName = match[1] || match[3] || '';
-                attachmentName = attachmentName.split('|')[0].trim();
-                if (!attachmentName) continue;
+        if (!cache) {
+            return attachments;
+        }
 
-                // Handle both absolute and relative paths
-                let file = null;
+        const processFile = async (linkedFile) => {
+            if (linkedFile && !linkedFile.children) {
+                const buffer = await app.vault.readBinary(linkedFile);
+                const base64 = arrayBufferToBase64(buffer);
+                const mimeType = this.getMimeType(linkedFile.extension);
                 
-                // Try getting the file directly first
-                file = app.vault.getAbstractFileByPath(attachmentName);
-                
-                // If not found, try resolving relative to the note
-                if (!file) {
-                    file = app.metadataCache.getFirstLinkpathDest(attachmentName, notePath);
-                }
-                
-                // If still not found, check in attachments folder
-                if (!file) {
-                    const attachmentFolder = app.vault.config.attachmentFolderPath || '';
-                    if (attachmentFolder) {
-                        const fullPath = `${attachmentFolder}/${attachmentName}`;
-                        file = app.vault.getAbstractFileByPath(fullPath);
+                attachments.push({
+                    name: linkedFile.name,
+                    type: linkedFile.extension,
+                    mimeType: mimeType,
+                    size: buffer.byteLength,
+                    data: `data:${mimeType};base64,${base64}`,
+                    path: linkedFile.path
+                });
+            }
+        };
+
+        if (cache.embeds) {
+            for (const embed of cache.embeds) {
+                if (embed.link) {
+                    const linkedFile = app.metadataCache.getFirstLinkpathDest(embed.link, file.path);
+                    if (linkedFile) {
+                        await processFile(linkedFile);
                     }
                 }
-
-                if (file && !file.children) { // Check that it's not a folder
-                    const arrayBuffer = await app.vault.readBinary(file);
-                    const base64 = this.arrayBufferToBase64(arrayBuffer);
-                    attachments.push({
-                        name: file.name,
-                        type: file.extension,
-                        size: arrayBuffer.byteLength,
-                        data: base64,
-                        path: file.path
-                    });
-                }
-            } catch (error) {
-                console.error(`Failed to process attachment: ${error.message}`);
             }
         }
-        
+
+        if (cache.links) {
+            for (const link of cache.links) {
+                if (link.link) {
+                    const linkedFile = app.metadataCache.getFirstLinkpathDest(link.link, file.path);
+                    if (linkedFile) {
+                        await processFile(linkedFile);
+                    }
+                }
+            }
+        }
+
         return attachments;
     }
 
-    static arrayBufferToBase64(buffer) {
-        let binary = '';
-        const bytes = new Uint8Array(buffer);
-        for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
+    static getMimeType(extension) {
+        const mimeTypes = {
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            gif: 'image/gif',
+            webp: 'image/webp',
+            svg: 'image/svg+xml',
+            mp3: 'audio/mpeg',
+            wav: 'audio/wav',
+            ogg: 'audio/ogg',
+            m4a: 'audio/mp4',
+            mp4: 'video/mp4',
+            webm: 'video/webm',
+            ogv: 'video/ogg',
+            mov: 'video/quicktime',
+            pdf: 'application/pdf',
+            doc: 'application/msword',
+            docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            json: 'application/json',
+            xml: 'application/xml',
+            zip: 'application/zip'
+        };
+        
+        return mimeTypes[extension?.toLowerCase()] || 'application/octet-stream';
     }
 
-    static async sendContent(app, webhookUrl, content, filename, notePath) {
-        if (!this.validateUrl(webhookUrl)) {
-            throw new Error('Invalid webhook URL format');
+    static async sendContent(app, webhookUrl, content, filename, file) {
+        if (!webhookUrl) {
+            throw new Error('Webhook URL is required');
         }
 
-        const { frontmatter, content: noteContent } = this.parseYamlFrontmatter(content);
-        const attachments = await this.getAttachments(app, content, notePath);
-
-        const payload = {
-            ...frontmatter,
-            content: noteContent,
-            filename,
-            timestamp: Date.now(),
-            attachments
-        };
+        if (!this.validateUrl(webhookUrl)) {
+            throw new Error('Invalid Webhook URL. Must be a valid HTTP or HTTPS URL');
+        }
 
         try {
-            const response = await fetch(webhookUrl, {
+            const cache = app.metadataCache.getFileCache(file);
+            let frontmatter = {};
+            let noteContent = content;
+
+            if (cache && cache.frontmatter) {
+                frontmatter = parseYaml(cache.frontmatter);
+                const contentStart = cache.frontmatterPosition.end.offset + 1;
+                noteContent = content.slice(contentStart).trim();
+            }
+
+            const attachments = await this.getAttachments(app, file);
+
+            const payload = {
+                ...frontmatter,
+                content: noteContent,
+                filename,
+                timestamp: Date.now(),
+                attachments
+            };
+
+            const response = await requestUrl({
+                url: webhookUrl,
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.status >= 400) {
+                throw new Error(`Request failed: ${response.status}`);
             }
 
             return true;
         } catch (error) {
-            throw new Error(`Failed to send webhook: ${error.message}`);
+            if (error.message.includes('Failed to fetch')) {
+                throw new Error('Could not connect to the Webhook URL. Please check your internet connection and the URL.');
+            }
+            throw new Error(`Failed to send Webhook: ${error.message}`);
         }
     }
 }
 
-module.exports = { WebhookService };
+module.exports = WebhookService;
