@@ -1,10 +1,10 @@
 const fs = require('fs');
 
 const manifest = {
-    "id": "obsidian-webhook",
+    "id": "post-webhook",
     "name": "Webhook Sender",
     "version": "1.0.0",
-    "minAppVersion": "0.12.0",
+    "minAppVersion": "1.5.7",
     "description": "Send notes to webhook",
     "author": "Your Name",
     "isDesktopOnly": false
