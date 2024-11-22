@@ -113,25 +113,30 @@ class WebhookService {
         }
 
         try {
-            const cache = app.metadataCache.getFileCache(file);
-            let frontmatter = {};
-            let noteContent = content;
-
-            if (cache && cache.frontmatter) {
-                frontmatter = parseYaml(cache.frontmatter);
-                const contentStart = cache.frontmatterPosition.end.offset + 1;
-                noteContent = content.slice(contentStart).trim();
-            }
-
+            const info = getFrontMatterInfo(content);
             const attachments = await this.getAttachments(app, file);
-
-            const payload = {
-                ...frontmatter,
-                content: noteContent,
-                filename,
-                timestamp: Date.now(),
-                attachments
-            };
+            
+            let payload;
+            if (info.exists) {
+                const frontmatter = parseYaml(info.frontmatter);
+                const noteContent = content.slice(info.contentStart).trim();
+                
+                // Spread the frontmatter at root level and add other fields
+                payload = {
+                    ...frontmatter,  // This puts all YAML fields at root level
+                    content: noteContent,
+                    filename: filename,
+                    timestamp: Date.now(),
+                    attachments: attachments
+                };
+            } else {
+                payload = {
+                    content: content,
+                    filename: filename,
+                    timestamp: Date.now(),
+                    attachments: attachments
+                };
+            }
 
             const response = await requestUrl({
                 url: webhookUrl,
