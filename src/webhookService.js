@@ -155,6 +155,44 @@ class WebhookService {
             throw new Error(`Failed to send Webhook: ${error.message}`);
         }
     }
+
+    static async testWebhook(webhookUrl) {
+        if (!this.validateUrl(webhookUrl)) {
+            throw new Error('Invalid Webhook URL. Must be a valid HTTP or HTTPS URL');
+        }
+
+        try {
+            const testPayload = {
+                test: true,
+                timestamp: Date.now(),
+                message: 'This is a test message from Obsidian Post Webhook plugin'
+            };
+
+            const response = await requestUrl({
+                url: webhookUrl,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(testPayload)
+            });
+
+            if (response.status >= 400) {
+                throw new Error(`Test request failed with status: ${response.status}`);
+            }
+
+            return {
+                success: true,
+                message: 'Webhook test successful!'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `Webhook test failed: ${error.message}`
+            };
+        }
+    }
 }
 
 module.exports = WebhookService;
