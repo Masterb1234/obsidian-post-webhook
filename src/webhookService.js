@@ -150,7 +150,7 @@ class WebhookService {
             return true;
         } catch (error) {
             if (error.message.includes('Failed to fetch')) {
-                throw new Error('Could not connect to the Webhook URL. Please check your internet connection and the URL.');
+                throw new Error('Could not connect to the Webhook URL. Please check your internet connection and the URL');
             }
             throw new Error(`Failed to send Webhook: ${error.message}`);
         }
@@ -165,7 +165,7 @@ class WebhookService {
             const testPayload = {
                 test: true,
                 timestamp: Date.now(),
-                message: 'This is a test message from Obsidian Post Webhook plugin'
+                message: 'This is a test message from Post Webhook plugin'
             };
 
             const response = await requestUrl({
