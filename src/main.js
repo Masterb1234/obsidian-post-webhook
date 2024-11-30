@@ -1,4 +1,4 @@
-const { Plugin, Notice, PluginSettingTab, Setting } = require('obsidian');
+const { Plugin, Notice, PluginSettingTab, Setting, requestUrl } = require('obsidian');
 const WebhookService = require('./webhookService');
 
 class PostWebhookPlugin extends Plugin {
@@ -22,7 +22,14 @@ class PostWebhookPlugin extends Plugin {
 
                 try {
                     const content = await this.app.vault.read(file);
-                    await WebhookService.sendContent(this.app, this.settings.webhookUrl, content, file.name, file);
+                    const response = await WebhookService.sendContent(this.app, this.settings.webhookUrl, content, file.name, file);
+                    
+                    if (this.settings.attachResponse && response.text) {
+                        const responseContent = `\n\n---\n${response.text}`;
+                        const newContent = content + responseContent;
+                        await this.app.vault.modify(file, newContent);
+                    }
+                    
                     new Notice('Successfully sent to Webhook');
                 } catch (error) {
                     console.error('Webhook error:', error);
@@ -36,7 +43,8 @@ class PostWebhookPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, {
-            webhookUrl: ''
+            webhookUrl: '',
+            attachResponse: false
         }, await this.loadData());
     }
 
@@ -67,6 +75,16 @@ class PostWebhookSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
+            .setName('Attach Response')
+            .setDesc('Append Webhook response to the note')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.attachResponse)
+                .onChange(async (value) => {
+                    this.plugin.settings.attachResponse = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
             .setName('Test Webhook')
             .setDesc('Send a test request to verify your Webhook configuration')
             .addButton(button => button
@@ -84,15 +102,17 @@ class PostWebhookSettingTab extends PluginSettingTab {
                             message: 'Test Webhook from Obsidian'
                         };
 
-                        const response = await fetch(this.plugin.settings.webhookUrl, {
+                        const response = await requestUrl({
+                            url: this.plugin.settings.webhookUrl,
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
                             },
                             body: JSON.stringify(testPayload)
                         });
 
-                        if (response.ok) {
+                        if (response.status < 400) {
                             new Notice('Test Webhook sent successfully');
                         } else {
                             throw new Error(`HTTP ${response.status}`);

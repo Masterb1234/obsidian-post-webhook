@@ -9,6 +9,7 @@ Send your Obsidian notes to any Webhook endpoint with YAML frontmatter support a
 - 📎 Automatic attachment handling
 - ⚡ Quick access through command palette
 - 🧪 Built-in Webhook testing functionality 
+- 📥 Optional response attachment to notes
 
 ## Installation
 
@@ -69,6 +70,14 @@ The plugin automatically:
 - Converts them to Base64
 - Includes them in the Webhook payload
 - Supports images and other file types
+
+### Response Handling
+
+The plugin can automatically append Webhook responses to your notes:
+
+1. Enable "Attach Response" in plugin settings
+2. When sending a note, any response from the Webhook will be appended at the bottom with a separator line
+3. Perfect for receiving processed data, AI responses, or confirmation messages
 
 ## License
 

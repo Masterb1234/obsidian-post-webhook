@@ -121,7 +121,6 @@ class WebhookService {
                 const frontmatter = parseYaml(info.frontmatter);
                 const noteContent = content.slice(info.contentStart).trim();
                 
-                // Spread the frontmatter at root level and add other fields
                 payload = {
                     ...frontmatter,  // This puts all YAML fields at root level
                     content: noteContent,
@@ -152,7 +151,7 @@ class WebhookService {
                 throw new Error(`Request failed: ${response.status}`);
             }
 
-            return true;
+            return response;
         } catch (error) {
             if (error.message.includes('Failed to fetch')) {
                 throw new Error('Could not connect to the Webhook URL. Please check your internet connection and the URL');
