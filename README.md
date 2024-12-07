@@ -5,7 +5,7 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 ## Features
 
 - 📤 Send note content to multiple Webhook endpoints
-- ✂️ Send selected text to Webhook endpoints
+- ✂️ Send selected text to Webhook endpoints (not yet available on mobile)
 - 📋 YAML frontmatter parsing and inclusion in the Webhook payload
 - 📎 Automatic attachment handling
 - 📥 Response insertion into notes
