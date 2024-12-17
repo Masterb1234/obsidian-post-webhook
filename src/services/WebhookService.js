@@ -1,4 +1,5 @@
 const { requestUrl, arrayBufferToBase64, parseYaml, getFrontMatterInfo } = require('obsidian');
+const ResponseHandler = require('./ResponseHandler');
 
 class WebhookService {
     static validateUrl(url) {
@@ -151,7 +152,13 @@ class WebhookService {
                 throw new Error(`Request failed: ${response.status}`);
             }
 
-            return response;
+            // Process the response based on its content type
+            const processedResponse = await ResponseHandler.processResponse(app, response);
+            return { 
+                status: response.status,
+                text: processedResponse 
+            };
+
         } catch (error) {
             if (error.message.includes('Failed to fetch')) {
                 throw new Error('Could not connect to the Webhook URL. Please check your internet connection and the URL');

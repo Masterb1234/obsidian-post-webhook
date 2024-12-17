@@ -7,15 +7,11 @@ class SelectionCache {
         this.CACHE_TIMEOUT = 5000; // 5 seconds cache timeout
         this.setupMutationObserver();
         this.setupSelectionListener();
-        this.setupTouchSelectionListener();
     }
 
     setupMutationObserver() {
         this.observer = new MutationObserver(() => {
-            const selection = document.getSelection();
-            if (selection && selection.toString().trim()) {
-                this.updateCache(selection.toString());
-            }
+            this.updateFromEditor();
         });
 
         this.observer.observe(document.body, {
@@ -27,23 +23,20 @@ class SelectionCache {
 
     setupSelectionListener() {
         document.addEventListener('selectionchange', () => {
-            const selection = document.getSelection();
-            if (selection && selection.toString().trim()) {
-                this.updateCache(selection.toString());
-            }
+            this.updateFromEditor();
         });
     }
 
-    setupTouchSelectionListener() {
-        // Handle touch end events for mobile selection
-        document.addEventListener('touchend', () => {
-            setTimeout(() => {
-                const selection = document.getSelection();
-                if (selection && selection.toString().trim()) {
-                    this.updateCache(selection.toString());
-                }
-            }, 100); // Small delay to ensure selection is complete
-        });
+    updateFromEditor() {
+        const activeLeaf = app?.workspace?.activeLeaf;
+        const editor = activeLeaf?.view?.editor;
+        
+        if (editor && editor.getSelection) {
+            const selection = editor.getSelection();
+            if (selection) {
+                this.updateCache(selection);
+            }
+        }
     }
 
     updateCache(text) {
@@ -54,15 +47,19 @@ class SelectionCache {
     }
 
     getSelection() {
-        const currentTime = Date.now();
-        const activeSelection = document.getSelection()?.toString().trim();
-
-        // If there's an active selection, return it
-        if (activeSelection) {
-            return activeSelection;
+        const activeLeaf = app?.workspace?.activeLeaf;
+        const editor = activeLeaf?.view?.editor;
+        
+        // If we have an editor and it's in edit mode, use its selection
+        if (editor && editor.getSelection) {
+            const selection = editor.getSelection();
+            if (selection) {
+                return selection;
+            }
         }
 
         // If cached selection is still valid (within timeout), return it
+        const currentTime = Date.now();
         if (currentTime - this.cache.timestamp < this.CACHE_TIMEOUT) {
             return this.cache.text;
         }
