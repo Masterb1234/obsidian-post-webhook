@@ -1,14 +1,16 @@
 const { TFile } = require('obsidian');
+const ContentTypeUtils = require('../utils/ContentTypeUtils');
 
 class ResponseHandler {
     static async processResponse(app, response) {
-        const contentType = response.headers?.['content-type'] || '';
+        const contentType = (response.headers?.['content-type'] || 
+                           response.headers?.['Content-Type'] || '').toLowerCase();
 
         if (contentType.includes('application/json')) {
             return this.handleJsonResponse(response);
         }
 
-        if (contentType.includes('text/')) {
+        if (ContentTypeUtils.isTextContent(contentType)) {
             return this.handleTextResponse(response);
         }
 
