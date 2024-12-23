@@ -7,7 +7,7 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 - 📤 Send note content to multiple Webhook endpoints
 - ✂️ Send selected text to Webhook endpoints (not yet available on mobile)
 - 📋 YAML frontmatter parsing and inclusion in the Webhook payload
-- 📎 Automatic attachment handling
+- 📎 Automatic attachment handling with exclusion support
 - 📥 Response insertion into notes
 
 ## Installation
@@ -49,6 +49,11 @@ The plugin automatically parses YAML frontmatter and includes it in the Webhook 
 title: My Note
 tags: [Webhook, automation]
 category: tech
+exclude-attachment: attachment1.mp3  # Exclude a single attachment
+# OR exclude multiple attachments:
+exclude-attachment:
+  - image1.png
+  - document.pdf
 ---
 Your note content here...
 
@@ -84,6 +89,7 @@ The plugin automatically:
 - Converts them to Base64
 - Includes them in the Webhook payload
 - Supports images and other file types
+- Allows excluding specific attachments via YAML frontmatter
 
 ### Response Handling
 
@@ -93,6 +99,20 @@ The plugin can automatically insert Webhook responses into your notes:
 2. When sending a note/selection, any response will be inserted:
    - For full notes: Appended at the bottom
    - For selections: Inserted after the selected text
+
+The plugin handles various response types:
+- Text responses are inserted directly
+- JSON responses are formatted and wrapped in code blocks
+- Images are saved to your attachments folder and inserted as Obsidian image links
+- Audio files, PDFs, and other binary files are saved and linked appropriately
+
+## Use Cases
+
+### Email Integration
+Send emails directly from your Obsidian notes using n8n workflows. Write your email content in Obsidian, include recipients and subject in the frontmatter, and send it to your email workflow with a single command. [Template here](https://n8n.io/workflows/2591-send-emails-via-gmail-from-obsidian/)
+
+### Smart Airtable Queries
+Query your Airtable bases using natural language. Highlight a question in your note, send it to an n8n workflow that uses GPT to interpret your query, and get formatted Airtable data inserted directly into your note. [Template here](https://n8n.io/workflows/2615-get-airtable-data-via-ai-and-obsidian-notes/)
 
 ## License
 

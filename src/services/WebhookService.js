@@ -35,8 +35,23 @@ class WebhookService {
             return attachments;
         }
 
+        // Get excluded attachments from frontmatter
+        const fileContent = await app.vault.read(file);
+        const { frontmatter } = this.parseYamlFrontmatter(fileContent);
+        const excludedAttachments = frontmatter['exclude-attachment'] || [];
+        
+        // Convert single string to array if necessary
+        const excludeList = Array.isArray(excludedAttachments) 
+            ? excludedAttachments 
+            : [excludedAttachments];
+
         const processFile = async (linkedFile) => {
             if (linkedFile && !linkedFile.children) {
+                // Skip if file is in exclude list
+                if (excludeList.includes(linkedFile.name)) {
+                    return;
+                }
+
                 const buffer = await app.vault.readBinary(linkedFile);
                 const base64 = arrayBufferToBase64(buffer);
                 const mimeType = this.getMimeType(linkedFile.extension);
