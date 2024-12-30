@@ -99,26 +99,26 @@ For Webhooks where attachments are not necessary or might exceed the endpoint's 
 
 Context notes enable you to create reusable content blocks that can be seamlessly integrated into your webhook requests. This feature is particularly helpful for leveraging prompt templates stored in your Obsidian vault when interacting with AI models through webhook data.
 
-Example: To use variable notes for AI prompting, create a note with the following structure:
+Example: To use context notes for AI prompting, create a note with the following structure:
 
 ```
 ---
 post-webhook: true # Required to make this note available as a context block for webhook payloads.
 ---
---user # This section represents the user's input or request (can be any keyword).
+--user # can be any keyword
 Your user prompt to send to an AI model.
 
---assistant # Define the assistant's tone or personality.
+--assistant # can be any keyword
 Tell the model to adopt a specific tone or personality.
 
---system # Specify instructions that guide the AI's behavior.
+--system # can be any keyword
 Set the model's behavior.
 
 ```
 
 2. Enable "Include Context Note" for your Webhook
 3. When sending content, you'll be prompted to select a context note
-4. The variables (separated by --keyword) will be included in the Webhook payload
+4. The parameters (separated by --keyword) will be included in the Webhook payload
 
 ### Response Handling
 
