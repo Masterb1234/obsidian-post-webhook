@@ -1,7 +1,7 @@
 {
   "id": "post-webhook",
   "name": "Post Webhook",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "minAppVersion": "1.5.7",
   "description": "Send notes to Webhook endpoints, for seamless integration with n8n, Make.com, and Zapier.",
   "author": "MasterB1234",
