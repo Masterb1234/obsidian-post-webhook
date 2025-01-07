@@ -139,7 +139,7 @@ Send emails directly from your Obsidian notes using n8n workflows. Write your em
 Query your Airtable bases using natural language. Highlight a question in your note, send it to an n8n workflow that uses GPT to interpret your query, and get formatted Airtable data inserted directly into your note. [Template here](https://n8n.io/workflows/2615-get-airtable-data-via-ai-and-obsidian-notes/)
 
 ### Notes to Audio in Podcast Feed
-Transform your Obsidian notes into an audio podcast feed. Select text from your notes, send it to an n8n workflow that converts it to speech, and automatically publish it to a podcast feed compatible with apps such as Podcast Republic or platforms like Apple Podcasts and Spotify. The workflow handles text-to-speech conversion, audio hosting, and RSS feed generation. [Template here](https://n8n.io/workflows/2615-get-airtable-data-via-ai-and-obsidian-notes/)
+Transform your Obsidian notes into an audio podcast feed. Select text from your notes, send it to an n8n workflow that converts it to speech, and automatically publish it to a podcast feed compatible with apps such as Podcast Republic or platforms like Apple Podcasts and Spotify. The workflow handles text-to-speech conversion, audio hosting, and RSS feed generation. [Template here](https://n8n.io/workflows/2699-obsidian-notes-read-aloud-using-ai-available-as-a-podcast-feed/))
 
 ## License
 
