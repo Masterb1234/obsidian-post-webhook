@@ -5,12 +5,13 @@ import { WebhookSettings } from './types';
 
 const DEFAULT_SETTINGS: WebhookSettings = {
   webhooks: [{
-    id: 'default',
-    name: 'Default Webhook',
+    id: crypto.randomUUID(),
+    name: "Default Webhook",
     url: '',
-    attachResponse: false
-  }],
-  includeVariableNote: false
+    enabled: true,
+    processInlineFields: false,
+    responseHandling: 'append'
+  }]
 };
 
 export default class PostWebhookPlugin extends Plugin {
@@ -26,12 +27,18 @@ export default class PostWebhookPlugin extends Plugin {
     this.addSettingTab(new WebhookSettingsTab(this.app, this));
   }
 
-  onunload() {
-    this.webhookCommands?.selectionCache?.destroy();
-  }
-
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    
+    // Ensure all webhooks have required properties
+    this.settings.webhooks = this.settings.webhooks.map(webhook => ({
+      ...webhook,
+      // For old webhooks with id 'default' or no id, generate a new UUID
+      id: webhook.id === 'default' || !webhook.id ? crypto.randomUUID() : webhook.id,
+      enabled: webhook.enabled ?? true,
+      processInlineFields: webhook.processInlineFields ?? false,
+      responseHandling: webhook.responseHandling || 'append'
+    }));
   }
 
   async saveSettings() {

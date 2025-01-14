@@ -1,23 +1,26 @@
 import { Notice, Command, TFile, App, Editor, MarkdownView } from 'obsidian';
-import { SelectionCache } from '../utils/SelectionCache';
 import { WebhookService } from '../services/WebhookService';
 import PostWebhookPlugin from '../main';
 
 export class WebhookCommands {
   private plugin: PostWebhookPlugin;
   private registeredCommands: Set<string>;
-  selectionCache: SelectionCache;
 
   constructor(plugin: PostWebhookPlugin) {
     this.plugin = plugin;
     this.registeredCommands = new Set();
-    this.selectionCache = new SelectionCache();
   }
 
   registerCommands(): void {
+    // First, unregister all existing commands
     this.unregisterCommands();
 
     this.plugin.settings.webhooks.forEach(webhook => {
+      // Skip registration for disabled webhooks
+      if (webhook.enabled === false) {
+        return;
+      }
+
       const noteCommandId = `post-webhook-note-${webhook.id}`;
       this.plugin.addCommand({
         id: noteCommandId,
@@ -31,18 +34,13 @@ export class WebhookCommands {
 
           try {
             const content = await this.plugin.app.vault.read(activeFile);
-            const response = await WebhookService.sendContent(
+            await WebhookService.sendContent(
               this.plugin.app,
               webhook.url,
               content,
               activeFile.name,
               activeFile
             );
-
-            if (webhook.attachResponse && response.text) {
-              const newContent = `${content}\n\n${response.text}`;
-              await this.plugin.app.vault.modify(activeFile, newContent);
-            }
 
             new Notice(`Note sent to ${webhook.name}`);
           } catch (error) {
@@ -56,8 +54,8 @@ export class WebhookCommands {
       this.plugin.addCommand({
         id: selectionCommandId,
         name: `Send selection to ${webhook.name}`,
-        editorCallback: async (editor) => {
-          const activeFile = this.plugin.app.workspace.getActiveFile();
+        editorCallback: async (editor: Editor, view: MarkdownView) => {
+          const activeFile = view.file;
           if (!activeFile) {
             new Notice('No active file');
             return;
@@ -71,7 +69,7 @@ export class WebhookCommands {
 
           try {
             const content = await this.plugin.app.vault.read(activeFile);
-            const response = await WebhookService.sendContent(
+            await WebhookService.sendContent(
               this.plugin.app,
               webhook.url,
               content,
@@ -79,13 +77,6 @@ export class WebhookCommands {
               activeFile,
               selection
             );
-
-            if (webhook.attachResponse && response.text) {
-              const selectionRange = editor.listSelections()[0];
-              const end = selectionRange.head.line > selectionRange.anchor.line ? 
-                         selectionRange.head : selectionRange.anchor;
-              editor.replaceRange(`\n${response.text}`, end);
-            }
 
             new Notice(`Selection sent to ${webhook.name}`);
           } catch (error) {
@@ -98,8 +89,13 @@ export class WebhookCommands {
   }
 
   unregisterCommands(): void {
+    // Remove all registered commands
     this.registeredCommands.forEach(commandId => {
-      (this.plugin.app as any).commands.removeCommand(commandId);
+      // Use the app's command system to remove the command
+      const commands = (this.plugin.app as any).commands;
+      if (commands && commands.removeCommand) {
+        commands.removeCommand(commandId);
+      }
     });
     this.registeredCommands.clear();
   }

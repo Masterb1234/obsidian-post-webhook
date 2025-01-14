@@ -1,10 +1,12 @@
-import { App, TFile, requestUrl } from 'obsidian';
-import { WebhookResponse, VariableNote, Webhook } from '../types';
+import { App, TFile, requestUrl, Editor, MarkdownView } from 'obsidian';
+import { WebhookResponse, VariableNote, Webhook, ResponseHandlingMode } from '../types';
 import { AttachmentService } from './AttachmentService';
 import { PayloadService } from './PayloadService';
 import { ResponseHandler } from './ResponseHandler';
 import { UrlUtils } from '../utils/UrlUtils';
 import { VariableNoteModal } from '../ui/VariableNoteModal';
+import { ResponseHandlingModal } from '../ui/ResponseHandlingModal';
+import PostWebhookPlugin from '../main';
 
 export class WebhookService {
   static async sendContent(
@@ -13,7 +15,7 @@ export class WebhookService {
     content: string, 
     filename: string, 
     file: TFile, 
-    selectedText?: string | null
+    selectedText?: string
   ): Promise<WebhookResponse> {
     if (!webhookUrl) {
       throw new Error('Webhook URL is required');
@@ -24,8 +26,7 @@ export class WebhookService {
     }
 
     try {
-      // Safe type assertion for Obsidian's internal API
-      const plugin = (app as any).plugins?.getPlugin('post-webhook');
+      const plugin = (app as any).plugins.plugins['post-webhook'] as PostWebhookPlugin;
       const webhook = plugin?.settings.webhooks.find((w: Webhook) => w.url === webhookUrl);
       
       let variableNote: VariableNote | null = null;
@@ -45,7 +46,23 @@ export class WebhookService {
       }
       
       const attachments = await AttachmentService.getAttachments(app, file, webhook?.excludeAttachments);
-      const payload = PayloadService.createPayload(content, filename, attachments, selectedText, variableNote);
+      
+      // If no selectedText is provided, try to get it from the active editor
+      if (!selectedText) {
+        const activeView = app.workspace.getActiveViewOfType(MarkdownView);
+        if (activeView?.editor) {
+          selectedText = activeView.editor.getSelection();
+        }
+      }
+      
+      const payload = PayloadService.createPayload(
+        content, 
+        filename, 
+        attachments, 
+        selectedText, 
+        variableNote,
+        webhook?.processInlineFields || false
+      );
 
       const response = await requestUrl({
         url: webhookUrl,
@@ -62,6 +79,30 @@ export class WebhookService {
       }
 
       const processedResponse = await ResponseHandler.processResponse(app, response);
+
+      if (webhook?.responseHandling) {
+        let mode = webhook.responseHandling;
+        
+        // Only ask for response handling if mode is 'ask'
+        if (mode === 'ask') {
+          const modalResult = await new Promise<{ mode: ResponseHandlingMode, dontAskAgain: boolean }>((resolve) => {
+            new ResponseHandlingModal(app, (mode, dontAskAgain) => {
+              resolve({ mode, dontAskAgain });
+            }).open();
+          });
+          
+          mode = modalResult.mode;
+          
+          // Update webhook settings if don't ask again is checked
+          if (modalResult.dontAskAgain) {
+            webhook.responseHandling = mode;
+            await plugin.saveSettings();
+          }
+        }
+
+        await ResponseHandler.handleProcessedResponse(app, processedResponse, file, selectedText || null, mode);
+      }
+
       return { 
         status: response.status,
         text: processedResponse 

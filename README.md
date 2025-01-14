@@ -6,8 +6,8 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 
 - 📤 Send note content to multiple Webhook endpoints
 - ✂️ Send selected text to Webhook endpoints
-- 📋 YAML frontmatter parsing and inclusion in the Webhook payload
-- 📎 Automatic attachment handling with exclusion support
+- 📋 YAML frontmatter and inline fields parsing and inclusion in the Webhook payload
+- 📎 Automatic attachment handling
 - 📥 Response insertion into notes
 - 🔄 Support for adding other notes with context (such as prompts) for dynamic workflows
 
@@ -36,11 +36,21 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 3. Search for "Send to [Webhook Name]"
 4. Your note's content, frontmatter, and attachments will be sent
 
-#### Selected Text (not available in preview mode)
+#### Selected Text
 1. Select text in your note 
-2. Open command palette
-3. Choose "Send Selection to [Webhook Name]"
+2. Open command palette 
+3. Choose "Send Selection to [Webhook Name]" (not available in preview mode)
 4. The selected text will be sent and any response will be inserted after the selection
+
+### Response Handling
+
+You can configure how responses from the webhook are handled:
+- **Append**: Add the response at the end of your note
+- **New Note**: Create a new note with versioning (v1, v2, etc.)
+- **Overwrite**: Replace the current note's content with the response
+- **None**: Don't save the response
+
+The handling mode can be set per webhook, with an option to ask every time.
 
 ### YAML Frontmatter Support
 
@@ -83,6 +93,20 @@ Will be sent as:
 }
 ```
 
+### Inline Fields Support
+
+In addition to YAML frontmatter, you can use inline fields that will be included in the webhook payload:
+
+```markdown
+title:: My Document
+status:: draft
+tags:: [research, notes]
+
+Your content here...
+```
+
+These fields will be automatically extracted and added to the payload when inline field processing is enabled for the Webhook.
+
 ### Attachment Support
 
 The plugin automatically:
@@ -97,13 +121,13 @@ For Webhooks where attachments are not necessary or might exceed the endpoint's 
 
 ### Context Notes
 
-Context notes enable you to create reusable content blocks that can be seamlessly integrated into your webhook requests. This feature is particularly helpful for leveraging prompt templates stored in your Obsidian vault when interacting with AI models through webhook data.
+Context notes enable you to create reusable content blocks that can be seamlessly integrated into your Webhook requests. This feature is particularly helpful for leveraging prompt templates stored in your Obsidian vault when interacting with AI models through Webhook data.
 
 Example: To use context notes for AI prompting, create a note with the following structure:
 
 ```
 ---
-post-webhook: true # Required to make this note available as a context block for webhook payloads.
+post-webhook: true # Required to make this note available as a context block for Webhook payloads.
 ---
 --user # can be any keyword
 Your user prompt to send to an AI model.
@@ -119,16 +143,6 @@ Set the model's behavior.
 2. Enable "Include Context Note" for your Webhook
 3. When sending content, you'll be prompted to select a context note
 4. The parameters (separated by --keyword) will be included in the Webhook payload
-
-### Response Handling
-
-The plugin can automatically insert Webhook responses into your notes:
-
-1. Enable "Attach Response" in Webhook settings
-2. When sending a note/selection, responses are handled based on their type:
-   - Text responses are inserted directly
-   - JSON responses are formatted in code blocks
-   - Binary files (images, PDFs, etc.) are saved and linked appropriately
 
 ## Use Cases
 

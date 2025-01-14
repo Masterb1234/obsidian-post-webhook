@@ -1,6 +1,7 @@
 import { App, TFile, RequestUrlResponse } from 'obsidian';
 import { ContentTypeUtils } from '../utils/ContentTypeUtils';
 import { FileUtils } from '../utils/FileUtils';
+import { ResponseHandlingMode } from '../types';
 
 export class ResponseHandler {
   static async processResponse(app: App, response: RequestUrlResponse): Promise<string> {
@@ -16,6 +17,98 @@ export class ResponseHandler {
     }
 
     return this.processBinaryResponse(app, response, contentType);
+  }
+
+  static async handleProcessedResponse(
+    app: App,
+    response: string,
+    file: TFile,
+    selection: string | null,
+    mode: ResponseHandlingMode
+  ): Promise<void> {
+    switch (mode) {
+      case 'append':
+        await this.appendResponse(app, response, file, selection);
+        break;
+      case 'new':
+        await this.createNewNote(app, response, file);
+        break;
+      case 'overwrite':
+        await this.overwriteNote(app, response, file);
+        break;
+      case 'none':
+        // Do nothing
+        break;
+    }
+  }
+
+  private static async appendResponse(
+    app: App,
+    response: string,
+    file: TFile,
+    selection: string | null
+  ): Promise<void> {
+    const content = await app.vault.read(file);
+    let newContent: string;
+
+    if (selection) {
+      // Find the selection in the content and append after it
+      const selectionIndex = content.indexOf(selection);
+      if (selectionIndex !== -1) {
+        newContent = content.slice(0, selectionIndex + selection.length) +
+                    '\n\n' + response + '\n\n' +
+                    content.slice(selectionIndex + selection.length);
+      } else {
+        newContent = content + '\n\n' + response;
+      }
+    } else {
+      newContent = content + '\n\n' + response;
+    }
+
+    await app.vault.modify(file, newContent);
+  }
+
+  private static async createNewNote(
+    app: App,
+    response: string,
+    originalFile: TFile
+  ): Promise<void> {
+    const newName = await this.generateNewFileName(app, originalFile);
+    await app.vault.create(newName, response);
+  }
+
+  private static async overwriteNote(
+    app: App,
+    response: string,
+    file: TFile
+  ): Promise<void> {
+    await app.vault.modify(file, response);
+  }
+
+  private static async generateNewFileName(app: App, file: TFile): Promise<string> {
+    const basePath = file.path.substring(0, file.path.lastIndexOf('/') + 1);
+    let baseName = file.basename;
+    const extension = file.extension;
+    
+    const versionRegex = / v(\d+)$/;
+    const match = baseName.match(versionRegex);
+    let version = 1;
+
+    if (match) {
+      version = parseInt(match[1]) + 1;
+      baseName = baseName.replace(versionRegex, '');
+    }
+
+    let finalName = '';
+    let exists = true;
+    
+    while (exists) {
+      finalName = `${basePath}${baseName} v${version}.${extension}`;
+      exists = await app.vault.adapter.exists(finalName);
+      version++;
+    }
+
+    return finalName;
   }
 
   private static async formatJsonResponse(response: RequestUrlResponse): Promise<string> {
