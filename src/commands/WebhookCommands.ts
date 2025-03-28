@@ -39,7 +39,9 @@ export class WebhookCommands {
               webhook.url,
               content,
               activeFile.name,
-              activeFile
+              activeFile,
+              undefined,
+              false // Not a selection command
             );
 
             new Notice(`Note sent to ${webhook.name}`);
@@ -75,7 +77,8 @@ export class WebhookCommands {
               content,
               activeFile.name,
               activeFile,
-              selection
+              selection,
+              true // This is a selection command
             );
 
             new Notice(`Selection sent to ${webhook.name}`);

@@ -144,6 +144,15 @@ Set the model's behavior.
 3. When sending content, you'll be prompted to select a context note
 4. The parameters (separated by --keyword) will be included in the Webhook payload
 
+### Command IDs for Templater
+
+Each webhook has a unique command ID that can be used with Templater templates. To get the command IDx, go to plugin settings and click the "Copy" icon next to the webhook.
+
+You can use these command IDs in your Templater templates like this:
+```js
+<%* await app.commands.executeCommandById("post-webhook:post-webhook-note-[id]") %>
+```
+
 ## Use Cases
 
 ### Email Integration

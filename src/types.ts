@@ -11,6 +11,7 @@ export interface Webhook {
   enabled?: boolean;
   processInlineFields?: boolean;
   responseHandling: ResponseHandlingMode;
+  headers?: string;
 }
 
 export interface Attachment {

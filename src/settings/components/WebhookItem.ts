@@ -1,4 +1,4 @@
-import { Modal, Setting, App } from 'obsidian';
+import { Modal, Setting, App, Notice } from 'obsidian';
 import { Webhook, ResponseHandlingMode } from '../../types';
 
 export class WebhookItem extends Modal {
@@ -80,6 +80,34 @@ export class WebhookItem extends Modal {
         .onChange(async (value) => {
           await this.onUpdate(this.index, { includeVariableNote: value });
         }));
+
+    new Setting(contentEl)
+      .setName('Custom Headers')
+      .setDesc('Enter headers as JSON')
+      .addTextArea(text => {
+        text
+          .setValue(this.webhook.headers || '')
+          .setPlaceholder('{\n  "Authorization": "Bearer your-token",\n  "X-Custom-Header": "custom-value"\n}');
+        
+        text.inputEl.addEventListener('blur', async () => {
+          const value = text.getValue().trim();
+          if (!value) {
+            await this.onUpdate(this.index, { headers: '' });
+            return;
+          }
+
+          try {
+            const parsedHeaders = JSON.parse(value);
+            await this.onUpdate(this.index, { headers: JSON.stringify(parsedHeaders) });
+          } catch (e) {
+            new Notice('Invalid JSON format in headers');
+            text.setValue(this.webhook.headers || '');
+          }
+        });
+
+        text.inputEl.rows = 4;
+        text.inputEl.cols = 40;
+      });
 
     new Setting(contentEl)
       .addButton(button => button

@@ -15,7 +15,8 @@ export class WebhookService {
     content: string, 
     filename: string, 
     file: TFile, 
-    selectedText?: string
+    selectedText?: string,
+    isSelectionCommand: boolean = false
   ): Promise<WebhookResponse> {
     if (!webhookUrl) {
       throw new Error('Webhook URL is required');
@@ -47,11 +48,12 @@ export class WebhookService {
       
       const attachments = await AttachmentService.getAttachments(app, file, webhook?.excludeAttachments);
       
-      // If no selectedText is provided, try to get it from the active editor
-      if (!selectedText) {
+      // Only get selection from editor if this is explicitly a selection command
+      let effectiveSelection = selectedText;
+      if (!effectiveSelection && isSelectionCommand) {
         const activeView = app.workspace.getActiveViewOfType(MarkdownView);
         if (activeView?.editor) {
-          selectedText = activeView.editor.getSelection();
+          effectiveSelection = activeView.editor.getSelection();
         }
       }
       
@@ -59,18 +61,45 @@ export class WebhookService {
         content, 
         filename, 
         attachments, 
-        selectedText, 
+        effectiveSelection || null, 
         variableNote,
         webhook?.processInlineFields || false
       );
 
+      // Default headers
+      let headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+
+      // Parse and merge custom headers if they exist
+      if (webhook?.headers) {
+        try {
+          let customHeaders: Record<string, string>;
+          
+          // If headers is already an object, use it directly
+          if (typeof webhook.headers === 'object') {
+            customHeaders = webhook.headers;
+          } else {
+            // Try to parse string as JSON
+            customHeaders = JSON.parse(webhook.headers);
+          }
+
+          // Merge headers, letting custom headers override defaults
+          headers = {
+            ...customHeaders,
+            ...headers
+          };
+        } catch (e) {
+          console.error('Failed to parse custom headers:', e);
+          throw new Error('Invalid JSON in custom headers');
+        }
+      }
+
       const response = await requestUrl({
         url: webhookUrl,
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(payload)
       });
 
@@ -100,7 +129,13 @@ export class WebhookService {
           }
         }
 
-        await ResponseHandler.handleProcessedResponse(app, processedResponse, file, selectedText || null, mode);
+        await ResponseHandler.handleProcessedResponse(
+          app, 
+          processedResponse, 
+          file, 
+          isSelectionCommand ? (effectiveSelection || null) : null, 
+          mode
+        );
       }
 
       return { 

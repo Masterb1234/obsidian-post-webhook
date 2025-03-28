@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon, Notice } from 'obsidian';
 import PostWebhookPlugin from '../main';
 import { WebhookItem } from './components/WebhookItem';
 import { Webhook } from '../types';
@@ -33,6 +33,21 @@ export class WebhookSettingsTab extends PluginSettingTab {
       control.style.display = 'flex';
       control.style.alignItems = 'center';
       control.style.gap = '8px';
+      
+      const copyButton = control.createEl('button', {
+        cls: 'clickable-icon',
+        attr: {
+          'aria-label': 'Copy command ID'
+        }
+      });
+      setIcon(copyButton, 'copy');
+      
+      copyButton.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const commandId = `post-webhook:post-webhook-note-${webhook.id}`;
+        await navigator.clipboard.writeText(commandId);
+        new Notice('Command ID copied to clipboard');
+      });
       
       const settingsButton = control.createEl('button', {
         cls: 'clickable-icon',
