@@ -5,6 +5,7 @@ export class PayloadService {
   static createPayload(
     content: string,
     filename: string,
+    filepath: string,
     attachments: any[],
     selectedText?: string | null,
     variableNote?: VariableNote | null,
@@ -17,6 +18,7 @@ export class PayloadService {
       payload = {
         content: selectedText || content,
         filename,
+        filepath,
         timestamp: Date.now(),
         attachments
       };
@@ -28,6 +30,7 @@ export class PayloadService {
         ...frontmatter,
         content: noteContent,
         filename,
+        filepath,
         timestamp: Date.now(),
         attachments
       };

@@ -60,6 +60,7 @@ export class WebhookService {
       const payload = PayloadService.createPayload(
         content, 
         filename, 
+        '/' + file.path,
         attachments, 
         effectiveSelection || null, 
         variableNote,
