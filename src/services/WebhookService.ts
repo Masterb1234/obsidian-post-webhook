@@ -62,6 +62,7 @@ export class WebhookService {
         filename, 
         '/' + file.path,
         attachments, 
+        file,
         effectiveSelection || null, 
         variableNote,
         webhook?.processInlineFields || false

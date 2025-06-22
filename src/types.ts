@@ -28,6 +28,8 @@ export interface WebhookPayload {
   filename: string;
   filepath: string;
   timestamp: number;
+  createdAt: number;
+  modifiedAt: number;
   attachments: Attachment[];
   [key: string]: any;
 }

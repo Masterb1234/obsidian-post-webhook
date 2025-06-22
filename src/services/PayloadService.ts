@@ -1,4 +1,4 @@
-import { getFrontMatterInfo, parseYaml } from 'obsidian';
+import { getFrontMatterInfo, parseYaml, TFile } from 'obsidian';
 import { WebhookPayload, VariableNote } from '../types';
 
 export class PayloadService {
@@ -7,6 +7,7 @@ export class PayloadService {
     filename: string,
     filepath: string,
     attachments: any[],
+    file: TFile,
     selectedText?: string | null,
     variableNote?: VariableNote | null,
     processInlineFields: boolean = false
@@ -20,6 +21,8 @@ export class PayloadService {
         filename,
         filepath,
         timestamp: Date.now(),
+        createdAt: file.stat.ctime,
+        modifiedAt: file.stat.mtime,
         attachments
       };
     } else {
@@ -32,6 +35,8 @@ export class PayloadService {
         filename,
         filepath,
         timestamp: Date.now(),
+        createdAt: file.stat.ctime,
+        modifiedAt: file.stat.mtime,
         attachments
       };
     }
