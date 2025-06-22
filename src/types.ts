@@ -26,6 +26,7 @@ export interface Attachment {
 export interface WebhookPayload {
   content: string;
   filename: string;
+  filepath: string;
   timestamp: number;
   attachments: Attachment[];
   [key: string]: any;
