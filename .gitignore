@@ -1,0 +1,22 @@
+# Dependencies
+/node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Other
+.env
+.DS_Store
+
+# Build output
+main.js

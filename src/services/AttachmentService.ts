@@ -1,4 +1,4 @@
-import { App, TFile, arrayBufferToBase64, TAbstractFile } from 'obsidian';
+import { App, TFile, arrayBufferToBase64, TAbstractFile, Notice } from 'obsidian';
 import { Attachment } from '../types';
 import { MimeTypeUtils } from '../utils/MimeTypeUtils';
 import { YAMLParser } from '../utils/YAMLParser';
@@ -64,6 +64,7 @@ export class AttachmentService {
       };
     } catch (error) {
       console.error(`Failed to process attachment ${file.name}:`, error);
+      new Notice(`Failed to process attachment: ${file.name}`);
       return null;
     }
   }

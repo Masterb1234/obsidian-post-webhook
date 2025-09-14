@@ -10,6 +10,8 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 - 📎 Automatic attachment handling
 - 📥 Response insertion into notes
 - 🔄 Support for adding other notes with context (such as prompts) for dynamic workflows
+- 🌐 Send rendered HTML content (useful for plugings like Dataview and Bases)
+- 📦 Handle complex JSON responses with attachments
 
 ## Installation
 
@@ -36,11 +38,21 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 3. Search for "Send to [Webhook Name]"
 4. Your note's content, frontmatter, and attachments will be sent
 
-#### Selected Text
+#### Selected Text (not available in Reading View)
 1. Select text in your note 
 2. Open command palette 
-3. Choose "Send Selection to [Webhook Name]" (not available in preview mode)
+3. Choose "Send Selection to [Webhook Name]"
 4. The selected text will be sent and any response will be inserted after the selection
+
+### Sending Rendered HTML (This feature requires the active note to be in Reading View)
+
+You can configure a Webhook to send the rendered HTML of your note instead of the raw Markdown source. This is useful for notes that contain data from the Dataview or Bases plugin.
+
+1.  Enable the "Send Rendered HTML" option in the webhook's settings.
+2.  Switch your note to **Reading View**.
+3.  Trigger the webhook command.
+
+The rendered HTML will be included in the payload under the `renderedHtml` key.
 
 ### Response Handling
 
@@ -50,7 +62,7 @@ You can configure how responses from the webhook are handled:
 - **Overwrite**: Replace the current note's content with the response
 - **None**: Don't save the response
 
-The handling mode can be set per webhook, with an option to ask every time.
+The handling mode can be set per Webhook, with an option to ask every time.
 
 ### YAML Frontmatter Support
 
@@ -118,6 +130,25 @@ The plugin automatically:
 - Allows excluding specific attachments via YAML frontmatter
 
 For Webhooks where attachments are not necessary or might exceed the endpoint's file size limits, you can enable the "Exclude Attachments" option in the Webhook settings. All attachments will be omitted from requests to this endpoint.
+
+#### Prosessing Responses with Text as well as Attachments
+
+If the response is a JSON object with a `content` key and an `attachments` key (containing a list of files with `name` and `data` as a base64 string), the plugin will automatically save the attachments to your vault and insert the `content` into your note.
+
+This is useful for advanced workflows where an external service generates both text and files (e.g., images from a prompt, generated PDFs, etc.).
+
+Example response payload:
+```json
+{
+  "content": "Here is the generated chart:",
+  "attachments": [
+    {
+      "name": "chart.png",
+      "data": "base64_encoded_image_data..."
+    }
+  ]
+}
+```
 
 ### Context Notes
 

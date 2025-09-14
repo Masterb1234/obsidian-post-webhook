@@ -82,6 +82,49 @@ export class WebhookItem extends Modal {
         }));
 
     new Setting(contentEl)
+      .setName('Send Rendered HTML')
+      .setDesc('Include rendered HTML in the webhook payload. Requires note to be in Reading view.')
+      .addToggle(toggle => toggle
+        .setValue(this.webhook.sendRenderedHtml || false)
+        .onChange(async (value) => {
+          await this.onUpdate(this.index, { sendRenderedHtml: value });
+        }));
+
+    new Setting(contentEl)
+      .setName('Convert Internal Links to Obsidian URIs')
+      .setDesc('Convert internal links in the format [[Note Name]] to Obsidian URIs.')
+      .addToggle(toggle => toggle
+        .setValue(this.webhook.convertInternalLinksToObsidianURIs || false)
+        .onChange(async (value) => {
+          await this.onUpdate(this.index, { convertInternalLinksToObsidianURIs: value });
+        }));
+
+    new Setting(contentEl)
+      .setName('Timeout')
+      .setDesc('The time in seconds to wait for a response. Leave blank to use the default timeout.')
+      .addText(text => {
+        text
+          .setValue(this.webhook.timeout?.toString() || '')
+          .setPlaceholder('60');
+        
+        text.inputEl.addEventListener('blur', async () => {
+          const value = text.getValue().trim();
+          if (!value) {
+            await this.onUpdate(this.index, { timeout: undefined });
+            return;
+          }
+
+          const timeout = parseInt(value, 10);
+          if (Number.isInteger(timeout) && timeout > 0) {
+            await this.onUpdate(this.index, { timeout });
+          } else {
+            new Notice('Timeout must be a positive number.');
+            text.setValue(this.webhook.timeout?.toString() || '');
+          }
+        });
+      });
+
+    new Setting(contentEl)
       .setName('Custom Headers')
       .setDesc('Enter headers as JSON')
       .addTextArea(text => {

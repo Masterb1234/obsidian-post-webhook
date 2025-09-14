@@ -12,6 +12,9 @@ export interface Webhook {
   processInlineFields?: boolean;
   responseHandling: ResponseHandlingMode;
   headers?: string;
+  timeout?: number;
+  sendRenderedHtml?: boolean;
+  convertInternalLinksToObsidianURIs?: boolean;
 }
 
 export interface Attachment {
@@ -31,6 +34,7 @@ export interface WebhookPayload {
   createdAt: number;
   modifiedAt: number;
   attachments: Attachment[];
+  renderedHtml?: string;
   [key: string]: any;
 }
 

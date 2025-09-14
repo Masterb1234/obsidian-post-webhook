@@ -1,4 +1,4 @@
-import { App, TFile, RequestUrlResponse } from 'obsidian';
+import { App, TFile, RequestUrlResponse, Notice } from 'obsidian';
 import { ContentTypeUtils } from '../utils/ContentTypeUtils';
 import { FileUtils } from '../utils/FileUtils';
 import { ResponseHandlingMode } from '../types';
@@ -9,7 +9,7 @@ export class ResponseHandler {
                         response.headers?.['Content-Type'] || '').toLowerCase();
 
     if (contentType.includes('application/json')) {
-      return this.formatJsonResponse(response);
+      return this.formatJsonResponse(app, response);
     }
 
     if (ContentTypeUtils.isTextContent(contentType)) {
@@ -111,14 +111,56 @@ export class ResponseHandler {
     return finalName;
   }
 
-  private static async formatJsonResponse(response: RequestUrlResponse): Promise<string> {
+  private static async formatJsonResponse(app: App, response: RequestUrlResponse): Promise<string> {
     try {
-      const jsonData = await response.json;
-      return '```json\n' + JSON.stringify(jsonData, null, 2) + '\n```';
+      const responseText = response.text;
+      if (!responseText || responseText.trim() === '') {
+        return ''; // Handle empty response
+      }
+
+      const originalJsonData = await response.json;
+      let dataToCheck = originalJsonData;
+
+      // Handle n8n's array-based output by checking the first element
+      if (Array.isArray(originalJsonData) && originalJsonData.length > 0) {
+        dataToCheck = originalJsonData[0];
+      }
+
+      // Check if the data (either the object or the first element of the array) is a valid complex response
+      if (dataToCheck && typeof dataToCheck.content === 'string' && Array.isArray(dataToCheck.attachments)) {
+        return this.processComplexJsonResponse(app, dataToCheck);
+      } else {
+        // If it's not a complex response, return the original full JSON in a code block
+        return '```json\n' + JSON.stringify(originalJsonData, null, 2) + '\n```';
+      }
     } catch (error) {
       console.error('Failed to parse JSON response:', error);
       return 'Failed to parse JSON response';
     }
+  }
+
+  private static async processComplexJsonResponse(app: App, payload: { content: string, attachments: any[] }): Promise<string> {
+    const attachmentFolder = (app.vault as any).config?.attachmentFolderPath || 'attachments';
+    
+    try {
+      await app.vault.createFolder(attachmentFolder);
+    } catch (error) {
+      // Ignore error if folder already exists
+    }
+
+    for (const attachment of payload.attachments) {
+      if (attachment.name && attachment.data) {
+        try {
+          const decodedData = Buffer.from(attachment.data, 'base64');
+          const filePath = `${attachmentFolder}/${attachment.name}`;
+          await app.vault.createBinary(filePath, decodedData);
+        } catch (error) {
+          console.error(`Failed to process attachment ${attachment.name}:`, error);
+        }
+      }
+    }
+
+    return payload.content;
   }
 
   private static async formatTextResponse(response: RequestUrlResponse): Promise<string> {

@@ -41,7 +41,8 @@ export class WebhookCommands {
               activeFile.name,
               activeFile,
               undefined,
-              false // Not a selection command
+              false, // Not a selection command
+              this.plugin.statusBarItem
             );
 
             new Notice(`Note sent to ${webhook.name}`);
@@ -78,7 +79,8 @@ export class WebhookCommands {
               activeFile.name,
               activeFile,
               selection,
-              true // This is a selection command
+              true, // This is a selection command
+              this.plugin.statusBarItem
             );
 
             new Notice(`Selection sent to ${webhook.name}`);

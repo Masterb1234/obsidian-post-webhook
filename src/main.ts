@@ -10,17 +10,23 @@ const DEFAULT_SETTINGS: WebhookSettings = {
     url: '',
     enabled: true,
     processInlineFields: false,
-    responseHandling: 'append'
+    responseHandling: 'append',
+    sendRenderedHtml: false,
+    convertInternalLinksToObsidianURIs: false
   }]
 };
 
 export default class PostWebhookPlugin extends Plugin {
   settings: WebhookSettings;
   webhookCommands: WebhookCommands;
+  statusBarItem: HTMLElement;
 
   async onload() {
     await this.loadSettings();
     
+    this.statusBarItem = this.addStatusBarItem();
+    this.statusBarItem.hide();
+
     this.webhookCommands = new WebhookCommands(this);
     this.webhookCommands.registerCommands();
     
@@ -37,7 +43,9 @@ export default class PostWebhookPlugin extends Plugin {
       id: webhook.id === 'default' || !webhook.id ? crypto.randomUUID() : webhook.id,
       enabled: webhook.enabled ?? true,
       processInlineFields: webhook.processInlineFields ?? false,
-      responseHandling: webhook.responseHandling || 'append'
+      responseHandling: webhook.responseHandling || 'append',
+      sendRenderedHtml: webhook.sendRenderedHtml ?? false,
+      convertInternalLinksToObsidianURIs: webhook.convertInternalLinksToObsidianURIs ?? false
     }));
   }
 

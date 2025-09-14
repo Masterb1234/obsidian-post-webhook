@@ -1,8 +1,9 @@
-import { getFrontMatterInfo, parseYaml, TFile } from 'obsidian';
+import { getFrontMatterInfo, parseYaml, TFile, App } from 'obsidian';
 import { WebhookPayload, VariableNote } from '../types';
 
 export class PayloadService {
   static createPayload(
+    app: App,
     content: string,
     filename: string,
     filepath: string,
@@ -10,7 +11,9 @@ export class PayloadService {
     file: TFile,
     selectedText?: string | null,
     variableNote?: VariableNote | null,
-    processInlineFields: boolean = false
+    processInlineFields: boolean = false,
+    renderedHtml?: string,
+    convertInternalLinksToObsidianURIs: boolean = false
   ): WebhookPayload {
     const info = getFrontMatterInfo(content);
     let payload: WebhookPayload;
@@ -41,7 +44,10 @@ export class PayloadService {
       };
     }
 
-    // Process inline fields if enabled
+    if (convertInternalLinksToObsidianURIs) {
+      payload.content = this.convertInternalLinks(app, payload.content, file.path);
+    }
+
     if (processInlineFields) {
       const inlineFields = this.extractInlineFields(selectedText || content);
       payload = {
@@ -50,7 +56,6 @@ export class PayloadService {
       };
     }
 
-    // Add variables from variable note if provided
     if (variableNote?.variables) {
       payload = {
         ...payload,
@@ -58,7 +63,30 @@ export class PayloadService {
       };
     }
 
+    if (renderedHtml) {
+      payload.renderedHtml = renderedHtml;
+    }
+
     return payload;
+  }
+
+  private static convertInternalLinks(app: App, content: string, sourcePath: string): string {
+    const wikiLinkRegex = /(\!)?\[\[([^\]|]+)(?:\|(.+?))?\]\]/g;
+
+    return content.replace(wikiLinkRegex, (match, isEmbedChar, link, alias) => {
+      if (isEmbedChar) {
+        return match;
+      }
+
+      const file = app.metadataCache.getFirstLinkpathDest(link, sourcePath);
+      if (file) {
+        const vaultName = app.vault.getName();
+        const obsidianUri = `obsidian://vault/${encodeURIComponent(vaultName)}/${encodeURIComponent(file.path)}`;
+        const displayText = alias || link;
+        return `[${displayText}](${obsidianUri})`;
+      }
+      return match;
+    });
   }
 
   private static extractInlineFields(content: string): Record<string, string | string[]> {
@@ -71,36 +99,28 @@ export class PayloadService {
       const trimmedKey = key.trim();
       const trimmedValue = value.trim();
 
-      // Check if the value is wrapped in square brackets
       if (trimmedValue.startsWith('[') && trimmedValue.endsWith(']')) {
-        // Parse array value
         const arrayValue = trimmedValue
-          .slice(1, -1) // Remove brackets
+          .slice(1, -1)
           .split(',')
           .map(item => item.trim())
           .filter(item => item.length > 0);
         
-        // If the field already exists and is an array, append to it
         if (Array.isArray(fields[trimmedKey])) {
           (fields[trimmedKey] as string[]).push(...arrayValue);
         } else if (fields[trimmedKey]) {
-          // If the field exists but isn't an array, convert it to an array
           fields[trimmedKey] = [fields[trimmedKey] as string, ...arrayValue];
         } else {
-          // New array field
           fields[trimmedKey] = arrayValue;
         }
       } else {
-        // Handle single value
         if (fields[trimmedKey]) {
-          // If the field already exists, convert it to an array
           if (Array.isArray(fields[trimmedKey])) {
             (fields[trimmedKey] as string[]).push(trimmedValue);
           } else {
             fields[trimmedKey] = [fields[trimmedKey] as string, trimmedValue];
           }
         } else {
-          // New single value field
           fields[trimmedKey] = trimmedValue;
         }
       }

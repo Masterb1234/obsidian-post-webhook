@@ -1,6 +1,6 @@
 {
   "name": "obsidian-post-webhook",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Send notes to webhook",
   "main": "main.js",
   "scripts": {
@@ -19,7 +19,7 @@
   "devDependencies": {
     "@types/node": "^16.11.6",
     "builtin-modules": "3.3.0",
-    "esbuild": "0.17.3",
+    "esbuild": "^0.25.9",
     "obsidian": "^1.4.11",
     "tslib": "^2.6.2",
     "typescript": "4.7.4"
