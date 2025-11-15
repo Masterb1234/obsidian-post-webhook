@@ -1,6 +1,6 @@
 {
   "name": "obsidian-post-webhook",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Send notes to webhook",
   "main": "main.js",
   "scripts": {

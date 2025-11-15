@@ -13,12 +13,23 @@ export class PayloadService {
     variableNote?: VariableNote | null,
     processInlineFields: boolean = false,
     renderedHtml?: string,
-    convertInternalLinksToObsidianURIs: boolean = false
+    convertInternalLinksToObsidianURIs: boolean = false,
+    includeRawContent: boolean = false
   ): WebhookPayload {
     const info = getFrontMatterInfo(content);
     let payload: WebhookPayload;
-    
-    if (!info.exists) {
+
+    if (includeRawContent) {
+      payload = {
+        content: selectedText || content,
+        filename,
+        filepath,
+        timestamp: Date.now(),
+        createdAt: file.stat.ctime,
+        modifiedAt: file.stat.mtime,
+        attachments
+      };
+    } else if (!info.exists) {
       payload = {
         content: selectedText || content,
         filename,
@@ -31,7 +42,7 @@ export class PayloadService {
     } else {
       const frontmatter = parseYaml(info.frontmatter);
       const noteContent = selectedText || content.slice(info.contentStart).trim();
-      
+
       payload = {
         ...frontmatter,
         content: noteContent,

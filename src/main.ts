@@ -12,7 +12,8 @@ const DEFAULT_SETTINGS: WebhookSettings = {
     processInlineFields: false,
     responseHandling: 'append',
     sendRenderedHtml: false,
-    convertInternalLinksToObsidianURIs: false
+    convertInternalLinksToObsidianURIs: false,
+    includeRawContent: false
   }]
 };
 
@@ -45,7 +46,8 @@ export default class PostWebhookPlugin extends Plugin {
       processInlineFields: webhook.processInlineFields ?? false,
       responseHandling: webhook.responseHandling || 'append',
       sendRenderedHtml: webhook.sendRenderedHtml ?? false,
-      convertInternalLinksToObsidianURIs: webhook.convertInternalLinksToObsidianURIs ?? false
+      convertInternalLinksToObsidianURIs: webhook.convertInternalLinksToObsidianURIs ?? false,
+      includeRawContent: webhook.includeRawContent ?? false
     }));
   }
 

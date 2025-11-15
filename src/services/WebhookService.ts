@@ -98,16 +98,17 @@ export class WebhookService {
       
       const payload = PayloadService.createPayload(
         app,
-        content, 
-        filename, 
+        content,
+        filename,
         '/' + file.path,
-        attachments, 
+        attachments,
         file,
-        effectiveSelection || null, 
+        effectiveSelection || null,
         variableNote,
         webhook?.processInlineFields || false,
         renderedHtml,
-        webhook?.convertInternalLinksToObsidianURIs || false
+        webhook?.convertInternalLinksToObsidianURIs || false,
+        webhook?.includeRawContent || false
       );
 
       let headers: Record<string, string> = {

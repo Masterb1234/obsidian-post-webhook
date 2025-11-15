@@ -10,7 +10,8 @@ export class VariableNoteService {
       const metadata = metadataCache.getFileCache(file);
       const frontmatter = metadata?.frontmatter;
       
-      if (frontmatter?.['post-webhook'] === true) {
+      const postWebhookValue = frontmatter?.['post-webhook'];
+      if (postWebhookValue === true || postWebhookValue === 'true') {
         const content = await vault.read(file);
         const variables = this.parseVariables(content);
         

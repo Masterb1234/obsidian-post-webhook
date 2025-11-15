@@ -100,6 +100,15 @@ export class WebhookItem extends Modal {
         }));
 
     new Setting(contentEl)
+      .setName('Include Raw Content')
+      .setDesc('Include the raw note content with frontmatter intact. When enabled, disables frontmatter parsing.')
+      .addToggle(toggle => toggle
+        .setValue(this.webhook.includeRawContent || false)
+        .onChange(async (value) => {
+          await this.onUpdate(this.index, { includeRawContent: value });
+        }));
+
+    new Setting(contentEl)
       .setName('Timeout')
       .setDesc('The time in seconds to wait for a response. Leave blank to use the default timeout.')
       .addText(text => {

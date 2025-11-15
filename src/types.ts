@@ -15,6 +15,7 @@ export interface Webhook {
   timeout?: number;
   sendRenderedHtml?: boolean;
   convertInternalLinksToObsidianURIs?: boolean;
+  includeRawContent?: boolean;
 }
 
 export interface Attachment {
