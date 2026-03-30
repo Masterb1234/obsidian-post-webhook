@@ -42,6 +42,24 @@ export class ResponseHandler {
     }
   }
 
+  static async mergeToFrontmatter(
+    app: App,
+    jsonData: Record<string, any>,
+    file: TFile,
+    prefix: string,
+    conflictStrategy: 'skip' | 'overwrite'
+  ): Promise<void> {
+    await (app.fileManager as any).processFrontMatter(file, (frontmatter: Record<string, any>) => {
+      for (const key of Object.keys(jsonData)) {
+        const finalKey = `${prefix}${key}`;
+        if (conflictStrategy === 'skip' && finalKey in frontmatter) {
+          continue;
+        }
+        frontmatter[finalKey] = jsonData[key];
+      }
+    });
+  }
+
   private static async appendResponse(
     app: App,
     response: string,

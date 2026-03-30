@@ -15,7 +15,7 @@ export class WebhookItem extends Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.empty();
-    
+
     contentEl.createEl('h2', { text: 'Edit Webhook' });
 
     new Setting(contentEl)
@@ -45,14 +45,41 @@ export class WebhookItem extends Modal {
           .addOption('append', 'Append to note')
           .addOption('new', 'Create new note')
           .addOption('overwrite', 'Overwrite note')
+          .addOption('frontmatter', 'Merge to Frontmatter')
           .addOption('ask', 'Ask every time')
           .setValue(this.webhook.responseHandling)
           .onChange(async (value) => {
+            this.webhook.responseHandling = value as ResponseHandlingMode;
             await this.onUpdate(this.index, {
               responseHandling: value as ResponseHandlingMode
             });
+            this.onOpen();
           });
       });
+
+    if (this.webhook.responseHandling === 'frontmatter') {
+      new Setting(contentEl)
+        .setName('Frontmatter Key Prefix')
+        .setDesc('Prefix added to each JSON key before writing to frontmatter. Leave blank to use keys as-is.')
+        .addText(text => text
+          .setValue(this.webhook.frontmatterKeyPrefix ?? '')
+          .onChange(async (value) => {
+            await this.onUpdate(this.index, { frontmatterKeyPrefix: value });
+          }));
+
+      new Setting(contentEl)
+        .setName('Conflict Strategy')
+        .setDesc('What to do when a key already exists in the note\'s frontmatter.')
+        .addDropdown(dropdown => dropdown
+          .addOption('skip', 'Skip (keep existing value)')
+          .addOption('overwrite', 'Overwrite (replace with new value)')
+          .setValue(this.webhook.frontmatterConflictStrategy ?? 'skip')
+          .onChange(async (value) => {
+            await this.onUpdate(this.index, {
+              frontmatterConflictStrategy: value as 'skip' | 'overwrite'
+            });
+          }));
+    }
 
     new Setting(contentEl)
       .setName('Process Inline Fields')
@@ -115,7 +142,7 @@ export class WebhookItem extends Modal {
         text
           .setValue(this.webhook.timeout?.toString() || '')
           .setPlaceholder('60');
-        
+
         text.inputEl.addEventListener('blur', async () => {
           const value = text.getValue().trim();
           if (!value) {
@@ -140,7 +167,7 @@ export class WebhookItem extends Modal {
         text
           .setValue(this.webhook.headers || '')
           .setPlaceholder('{\n  "Authorization": "Bearer your-token",\n  "X-Custom-Header": "custom-value"\n}');
-        
+
         text.inputEl.addEventListener('blur', async () => {
           const value = text.getValue().trim();
           if (!value) {
