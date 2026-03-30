@@ -16,6 +16,8 @@ export interface Webhook {
   sendRenderedHtml?: boolean;
   convertInternalLinksToObsidianURIs?: boolean;
   includeRawContent?: boolean;
+  frontmatterKeyPrefix?: string;
+  frontmatterConflictStrategy?: 'skip' | 'overwrite';
 }
 
 export interface Attachment {
@@ -61,4 +63,4 @@ export interface IVariableNoteModal {
   close: () => void;
 }
 
-export type ResponseHandlingMode = 'append' | 'new' | 'overwrite' | 'none' | 'ask';
+export type ResponseHandlingMode = 'append' | 'new' | 'overwrite' | 'none' | 'ask' | 'frontmatter';

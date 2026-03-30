@@ -182,29 +182,47 @@ export class WebhookService {
 
       if (webhook?.responseHandling) {
         let mode = webhook.responseHandling;
-        
+
         if (mode === 'ask') {
           const modalResult = await new Promise<{ mode: ResponseHandlingMode, dontAskAgain: boolean }>((resolve) => {
             new ResponseHandlingModal(app, (mode, dontAskAgain) => {
               resolve({ mode, dontAskAgain });
             }).open();
           });
-          
+
           mode = modalResult.mode;
-          
+
           if (modalResult.dontAskAgain) {
             webhook.responseHandling = mode;
             await plugin.saveSettings();
           }
         }
 
-        await ResponseHandler.handleProcessedResponse(
-          app, 
-          processedResponse, 
-          file, 
-          isSelectionCommand ? (effectiveSelection || null) : null, 
-          mode
-        );
+        if (mode === 'frontmatter') {
+          const contentType = (response.headers?.['content-type'] ||
+                              response.headers?.['Content-Type'] || '').toLowerCase();
+          if (contentType.includes('application/json')) {
+            try {
+              const jsonData = await response.json;
+              const prefix = webhook.frontmatterKeyPrefix ?? '';
+              const conflictStrategy = webhook.frontmatterConflictStrategy ?? 'skip';
+              await ResponseHandler.mergeToFrontmatter(app, jsonData, file, prefix, conflictStrategy);
+            } catch (error) {
+              console.error('Failed to merge JSON to frontmatter, falling back to append:', error);
+              await ResponseHandler.handleProcessedResponse(app, processedResponse, file, isSelectionCommand ? (effectiveSelection || null) : null, 'append');
+            }
+          } else {
+            await ResponseHandler.handleProcessedResponse(app, processedResponse, file, isSelectionCommand ? (effectiveSelection || null) : null, 'append');
+          }
+        } else {
+          await ResponseHandler.handleProcessedResponse(
+            app,
+            processedResponse,
+            file,
+            isSelectionCommand ? (effectiveSelection || null) : null,
+            mode
+          );
+        }
       }
 
       return { 

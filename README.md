@@ -33,14 +33,16 @@ Send your Obsidian notes or selected text to any Webhook endpoint with YAML fron
 ### Sending Content
 
 #### Full Notes
+
 1. Open any note
 2. Use the command palette (Ctrl/Cmd + P)
 3. Search for "Send to [Webhook Name]"
 4. Your note's content, frontmatter, and attachments will be sent
 
 #### Selected Text (not available in Reading View)
-1. Select text in your note 
-2. Open command palette 
+
+1. Select text in your note
+2. Open command palette
 3. Choose "Send Selection to [Webhook Name]"
 4. The selected text will be sent and any response will be inserted after the selection
 
@@ -57,12 +59,23 @@ The rendered HTML will be included in the payload under the `renderedHtml` key.
 ### Response Handling
 
 You can configure how responses from the webhook are handled:
+
 - **Append**: Add the response at the end of your note
 - **New Note**: Create a new note with versioning (v1, v2, etc.)
 - **Overwrite**: Replace the current note's content with the response
 - **None**: Don't save the response
+- **Merge to Frontmatter**: If the response is JSON, merge its top-level keys into the note's YAML frontmatter. If the response is not JSON, falls back to Append.
 
 The handling mode can be set per Webhook, with an option to ask every time.
+
+#### Merge to Frontmatter options
+
+When **Merge to Frontmatter** is selected, two additional settings appear:
+
+- **Frontmatter Key Prefix**: A string prepended to every key from the JSON response before writing to frontmatter (e.g. a prefix of `pw_` turns `summary` into `pw_summary`). Leave blank to use the keys as-is.
+- **Conflict Strategy**: What to do when a key already exists in the note's frontmatter:
+  - **Skip** (default): Keep the existing value, ignore the incoming one.
+  - **Overwrite**: Replace the existing value with the one from the response.
 
 ### YAML Frontmatter Support
 
@@ -122,6 +135,7 @@ These fields will be automatically extracted and added to the payload when inlin
 ### Attachment Support
 
 The plugin automatically:
+
 - Detects attachments referenced in your notes using the `![[filename]]` syntax
 - Reads the attachment files
 - Converts them to Base64
@@ -138,6 +152,7 @@ If the response is a JSON object with a `content` key and an `attachments` key (
 This is useful for advanced workflows where an external service generates both text and files (e.g., images from a prompt, generated PDFs, etc.).
 
 Example response payload:
+
 ```json
 {
   "content": "Here is the generated chart:",
@@ -180,6 +195,7 @@ Set the model's behavior.
 Each webhook has a unique command ID that can be used with Templater templates. To get the command IDx, go to plugin settings and click the "Copy" icon next to the webhook.
 
 You can use these command IDs in your Templater templates like this:
+
 ```js
 <%* await app.commands.executeCommandById("post-webhook:post-webhook-note-[id]") %>
 ```
@@ -187,12 +203,15 @@ You can use these command IDs in your Templater templates like this:
 ## Use Cases
 
 ### Email Integration
+
 Send emails directly from your Obsidian notes using n8n workflows. Write your email content in Obsidian, include recipients and subject in the frontmatter, and send it to your email workflow with a single command. [Template here](https://n8n.io/workflows/2591-send-emails-via-gmail-from-obsidian/)
 
 ### Smart Airtable Queries
+
 Query your Airtable bases using natural language. Highlight a question in your note, send it to an n8n workflow that uses GPT to interpret your query, and get formatted Airtable data inserted directly into your note. [Template here](https://n8n.io/workflows/2615-get-airtable-data-via-ai-and-obsidian-notes/)
 
 ### Notes to Audio in Podcast Feed
+
 Transform your Obsidian notes into an audio podcast feed. Select text from your notes, send it to an n8n workflow that converts it to speech, and automatically publish it to a podcast feed compatible with apps such as Podcast Republic or platforms like Apple Podcasts and Spotify. The workflow handles text-to-speech conversion, audio hosting, and RSS feed generation. [Template here](https://n8n.io/workflows/2699-obsidian-notes-read-aloud-using-ai-available-as-a-podcast-feed/))
 
 ## License
